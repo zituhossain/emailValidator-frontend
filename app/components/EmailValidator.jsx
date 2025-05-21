@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import {
   FileText,
@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Mail,
 } from "lucide-react";
+import ResultsList from "./ResultList";
 
 export default function EmailValidator() {
   const [file, setFile] = useState(null);
@@ -80,10 +81,34 @@ export default function EmailValidator() {
     return number;
   };
 
+  useEffect(() => {
+    const fetchResults = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/results`);
+        const data = await response.json();
+        if (data && Array.isArray(data.dbResults)) {
+          // Normalize csvPath slashes and extract just the filename for download
+          const processed = data.dbResults.map((result) => {
+            const csvFilename = result.csvPath.split("\\").pop();
+            return {
+              ...result,
+              csvPath: csvFilename, // For download links
+            };
+          });
+          setValidationResults(processed);
+        }
+      } catch (error) {
+        console.error("Failed to fetch validation results:", error);
+      }
+    };
+
+    fetchResults();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
           Email Validator
         </h1>
 
@@ -153,101 +178,7 @@ export default function EmailValidator() {
           </form>
         </div>
 
-        {/* Results Section */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Validation Results
-          </h2>
-
-          {validationResults.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Mail className="mx-auto h-12 w-12 mb-2" />
-              <p>
-                No validation results yet. Upload a CSV file to get started.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {validationResults.map((result, index) => (
-                <div
-                  key={index}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="font-medium text-gray-800">
-                      {result.originalFilename}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {new Date(result.createdAt).toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-green-50 p-3 rounded-lg">
-                      <div className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span className="font-medium text-gray-800">
-                          {formatNumber(result.valid)} valid
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="bg-red-50 p-3 rounded-lg">
-                      <div className="flex items-center">
-                        <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                        <span className="font-medium text-gray-800">
-                          {formatNumber(result.disposable)} disposable
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="bg-yellow-50 p-3 rounded-lg">
-                      <div className="flex items-center">
-                        <AlertCircle className="h-5 w-5 text-yellow-500 mr-2" />
-                        <span className="font-medium text-gray-800">
-                          {formatNumber(result.syntaxInvalid)} syntax invalid
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="bg-purple-50 p-3 rounded-lg">
-                      <div className="flex items-center">
-                        <AlertCircle className="h-5 w-5 text-purple-500 mr-2" />
-                        <span className="font-medium text-gray-800">
-                          {formatNumber(result.dnsInvalid)} DNS invalid
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex justify-end space-x-4">
-                    <a
-                      href={`${apiUrl}/api/download/${result.reportFile}`}
-                      className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                      download
-                    >
-                      Download Full Report
-                    </a>
-                    <a
-                      href={`${apiUrl}/api/download/${result.validEmailsFile}`}
-                      className="text-sm text-green-600 hover:text-green-800 hover:underline"
-                      download
-                    >
-                      Download Valid Emails
-                    </a>
-                    <a
-                      href={`${apiUrl}/api/download/${result.invalidEmailsFile}`}
-                      className="text-sm text-red-600 hover:text-red-800 hover:underline"
-                      download
-                    >
-                      Download Invalid Emails
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <ResultsList validationResults={validationResults} apiUrl={apiUrl} />
       </div>
     </div>
   );
