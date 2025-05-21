@@ -14,7 +14,7 @@ const ResultsList = ({ validationResults, apiUrl }) => {
       </h2>
 
       {validationResults.length === 0 ? (
-        <div className="text-center text-gray-500">
+        <div className="text-center text-gray-500 border">
           <p>No validation results found. Upload a CSV file to begin.</p>
         </div>
       ) : (
@@ -22,7 +22,7 @@ const ResultsList = ({ validationResults, apiUrl }) => {
           {validationResults.map((result, index) => (
             <div
               key={result.id?.toString() || result.originalFileName || index}
-              className="border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:shadow transition-shadow"
+              className="border border-gray-700 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:shadow transition-shadow"
             >
               {/* File title */}
               <div className="mb-4 sm:mb-0">
