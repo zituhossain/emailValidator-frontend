@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Loader2,
   FileDown,
+  Trash2,
 } from "lucide-react";
 
 const ResultsList = ({
@@ -14,6 +15,7 @@ const ResultsList = ({
   totalPages,
   limit,
   setLimit,
+  handleDelete,
 }) => {
   const handlePageClick = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -73,8 +75,16 @@ const ResultsList = ({
 
               {/* Status block */}
               <div className="w-full sm:w-2/3">
-                <div className="text-sm font-bold text-gray-700 mb-2">
-                  Status: {result.status}
+                <div className="flex justify-between  mb-2">
+                  <div className="text-sm font-bold text-gray-700 mb-2">
+                    Status: {result.status}
+                  </div>
+                  <div className="">
+                    <Trash2
+                      className="w-5 h-5 text-red-700 cursor-pointer"
+                      onClick={() => handleDelete(result.id)}
+                    />
+                  </div>
                 </div>
 
                 {result.status === "processing" ||

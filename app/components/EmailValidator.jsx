@@ -4,6 +4,7 @@ import { FileText, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ResultsList from "./ResultList";
+import Swal from "sweetalert2";
 
 export default function EmailValidator() {
   const [file, setFile] = useState(null);
@@ -13,7 +14,7 @@ export default function EmailValidator() {
   // const [progress, setProgress] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [limit, setLimit] = useState(2);
+  const [limit, setLimit] = useState(5);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -104,6 +105,30 @@ export default function EmailValidator() {
       console.error("Error polling for results:", error);
       setIsUploading(false);
       toast.error("An error occurred while fetching results.");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This will permanently delete the file and data!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await axios.delete(`${apiUrl}/results/${id}`);
+        setValidationResults((prev) => prev.filter((item) => item.id !== id));
+        toast.success("Result deleted successfully!");
+      } catch (error) {
+        console.error("Delete error:", error);
+        toast.error("Failed to delete the result.");
+      }
     }
   };
 
@@ -221,6 +246,7 @@ export default function EmailValidator() {
           totalPages={totalPages}
           limit={limit}
           setLimit={setLimit}
+          handleDelete={handleDelete}
         />
       </div>
     </div>
