@@ -1,16 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  FileText,
-  Upload,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Mail,
-} from "lucide-react";
-import ResultsList from "./ResultList";
+import { FileText, Upload } from "lucide-react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import ResultsList from "./ResultList";
 
 export default function EmailValidator() {
   const [file, setFile] = useState(null);
@@ -18,6 +11,9 @@ export default function EmailValidator() {
   const [validationResults, setValidationResults] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   // const [progress, setProgress] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(2);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -69,6 +65,7 @@ export default function EmailValidator() {
         ...prev,
       ]);
 
+      setPage(1); // Reset to the first page
       pollForResults(fileName, recordId);
     } catch (error) {
       setIsUploading(false);
@@ -100,9 +97,6 @@ export default function EmailValidator() {
         setFile(null);
         setEmailColumn("");
         toast.success("Validation completed successfully!");
-
-        // Also fetch latest results to ensure consistency
-        fetchLatestResults();
       } else {
         setTimeout(() => pollForResults(fileName, recordId), 5000);
       }
@@ -113,32 +107,12 @@ export default function EmailValidator() {
     }
   };
 
-  const fetchLatestResults = async () => {
-    try {
-      const response = await axios.get(`${apiUrl}/results`);
-      if (response.data?.dbResults) {
-        const processed = response.data.dbResults.map((result) => ({
-          ...result,
-          csvPath: result.csvPath.split(/[/\\]/).pop(), // Extract filename
-        }));
-        setValidationResults(processed);
-      }
-    } catch (error) {
-      console.error("Failed to fetch validation results:", error);
-    }
-  };
-
-  const formatNumber = (number) => {
-    if (number >= 1000) {
-      return `${(number / 1000).toFixed(1)}k`;
-    }
-    return number;
-  };
-
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const response = await fetch(`${apiUrl}/results`);
+        const response = await fetch(
+          `${apiUrl}/results?page=${page}&limit=${limit}`
+        );
         const data = await response.json();
         if (data && Array.isArray(data.dbResults)) {
           // Normalize csvPath slashes and extract just the filename for download
@@ -150,6 +124,7 @@ export default function EmailValidator() {
             };
           });
           setValidationResults(processed);
+          setTotalPages(data.totalPages);
         }
       } catch (error) {
         console.error("Failed to fetch validation results:", error);
@@ -157,8 +132,7 @@ export default function EmailValidator() {
     };
 
     fetchResults();
-    fetchLatestResults();
-  }, []);
+  }, [page, limit]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 ">
@@ -225,7 +199,7 @@ export default function EmailValidator() {
             <button
               type="submit"
               disabled={!file || isUploading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md disabled:bg-blue-300 transition-colors flex items-center justify-center"
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-md disabled:bg-slate-400 transition-colors flex items-center justify-center"
             >
               {isUploading ? (
                 <>
@@ -239,7 +213,15 @@ export default function EmailValidator() {
           </form>
         </div>
 
-        <ResultsList validationResults={validationResults} apiUrl={apiUrl} />
+        <ResultsList
+          validationResults={validationResults}
+          apiUrl={apiUrl}
+          page={page}
+          setPage={setPage}
+          totalPages={totalPages}
+          limit={limit}
+          setLimit={setLimit}
+        />
       </div>
     </div>
   );

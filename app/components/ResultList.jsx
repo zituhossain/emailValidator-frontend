@@ -6,12 +6,49 @@ import {
   FileDown,
 } from "lucide-react";
 
-const ResultsList = ({ validationResults, apiUrl }) => {
+const ResultsList = ({
+  validationResults,
+  apiUrl,
+  page,
+  setPage,
+  totalPages,
+  limit,
+  setLimit,
+}) => {
+  const handlePageClick = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const handleLimitChange = (e) => {
+    setLimit(parseInt(e.target.value));
+    setPage(1); // reset to page 1
+  };
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">
-        Validation Results
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          Validation Results
+        </h2>
+
+        {/* Results Per Page Selector */}
+        <div className="flex items-center justify-end mb-4">
+          <label className="mr-2 text-sm font-medium text-gray-700">
+            Show:
+          </label>
+          <select
+            className="border border-gray-300 px-2 py-1 rounded"
+            value={limit}
+            onChange={handleLimitChange}
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </select>
+        </div>
+      </div>
 
       {validationResults.length === 0 ? (
         <div className="text-center text-gray-500 border">
@@ -27,10 +64,10 @@ const ResultsList = ({ validationResults, apiUrl }) => {
               {/* File title */}
               <div className="mb-4 sm:mb-0">
                 <h3 className="text-lg font-semibold text-gray-800">
-                  {result.originalFileName}
+                  {result.originalFileName?.replace(/\.csv$/i, "")}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  {/* {new Date(result.createdAt).toLocaleString()} */}
+                  {new Date(result.createdAt).toLocaleString()}
                 </p>
               </div>
 
@@ -105,6 +142,58 @@ const ResultsList = ({ validationResults, apiUrl }) => {
               </div>
             </div>
           ))}
+
+          {/* Pagination */}
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => handlePageClick(page - 1)}
+              disabled={page === 1}
+              className="px-3 py-1 border rounded bg-white text-gray-700 border-gray-300 hover:bg-slate-300 disabled:opacity-50 transition-colors"
+            >
+              Previous
+            </button>
+
+            {Array.from(
+              { length: Math.min(totalPages, 3) },
+              (_, i) => i + 1
+            ).map((p) => (
+              <button
+                key={p}
+                onClick={() => handlePageClick(p)}
+                className={`px-3 py-1 mx-0.5 border rounded ${
+                  page === p
+                    ? "bg-slate-900 text-white"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-slate-300"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+
+            {totalPages > 3 && (
+              <>
+                <span className="px-2">...</span>
+                <button
+                  onClick={() => handlePageClick(totalPages)}
+                  className={`px-3 py-1 border rounded ${
+                    page === totalPages
+                      ? "bg-slate-900 text-white"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-slate-300"
+                  }`}
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={() => handlePageClick(page + 1)}
+              disabled={page === totalPages}
+              className="px-3 py-1 border rounded bg-white text-gray-700 border-gray-300 hover:bg-slate-300 disabled:opacity-50 transition-colors"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
     </div>
