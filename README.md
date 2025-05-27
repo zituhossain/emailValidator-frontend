@@ -36,9 +36,11 @@ Create a .env.local file:
 
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 
+
 🧪 Development Server****
 
 npm run dev
+
 
 
 🧾 Features
